@@ -94,7 +94,7 @@ class WholeFileReader extends RecordReader<Text, Text>{
 		String line;
 		if(!isRead){
 			while((line = in.readLine()) != null){
-				body += line;
+				body = body + line + "\n";
 			}
 			
 			for(int i = 0; i < META_CHARS_SERIALIZATIONS.length; ++i){
