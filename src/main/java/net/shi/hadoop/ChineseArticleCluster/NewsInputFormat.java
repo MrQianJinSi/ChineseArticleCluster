@@ -44,7 +44,7 @@ class WholeFileReader extends RecordReader<Text, Text>{
 	
 	private static String[] META_CHARS = { " "};
 
-	private static String[] META_CHARS_SERIALIZATIONS = { "&nbsp;" };
+	private static String[] META_CHARS_SERIALIZATIONS = { "&nbsp" };
 
 	@Override
 	public void close() throws IOException {
@@ -82,7 +82,10 @@ class WholeFileReader extends RecordReader<Text, Text>{
 
 		Path path = fileSplit.getPath();
 		FileSystem fs = path.getFileSystem(job);
-		key = new Text(path.toString());
+		
+		String[] dirs = path.toString().split(java.io.File.separator);
+		int sepNum = dirs.length;
+		key = new Text(dirs[sepNum-2] + "_" + dirs[sepNum-1]);
 
 		in = new BufferedReader(new InputStreamReader(fs.open(path)));
 	}
@@ -94,7 +97,7 @@ class WholeFileReader extends RecordReader<Text, Text>{
 		String line;
 		if(!isRead){
 			while((line = in.readLine()) != null){
-				body = body + line + "\n";
+				body = body + line;
 			}
 			
 			for(int i = 0; i < META_CHARS_SERIALIZATIONS.length; ++i){
