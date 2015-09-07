@@ -38,7 +38,7 @@ public class NewsToSequenceFileConvertor extends Configured implements Tool {
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 		
-		return job.waitForCompletion(true) ? 0 : 1;
+		return job.waitForCompletion(false) ? 0 : 1;
 	}
 
 	public static void main(String args[]) throws Exception{
@@ -53,6 +53,7 @@ public class NewsToSequenceFileConvertor extends Configured implements Tool {
 			
 			if(exitCode != 0)
 				break;
+			System.out.println(paths[0] + "completed!");
 		}
 
 		System.exit(exitCode);
