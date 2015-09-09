@@ -4,6 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
@@ -14,6 +15,10 @@ public class PairWritable implements WritableComparable<PairWritable> {
 	private Class<? extends Writable> firstClass, secondClass;
 	private Writable first, second;
 	
+	public PairWritable(PairWritable pair){
+		this.first = pair.getFirst();
+		this.second = pair.getSecond();
+	}
 	
 	public PairWritable(Class<? extends Writable> firstClass,
 			Class<? extends Writable> secondClass){	
@@ -107,5 +112,49 @@ class TextPairWritable extends PairWritable{
 	
 	public TextPairWritable(String first, Text second){
 		this(new Text(first), second);
+	}
+}
+
+class TextIntPairWritable extends PairWritable{
+	public TextIntPairWritable(){
+		super(Text.class, IntWritable.class);
+	}
+	
+	public TextIntPairWritable(Writable first, Writable second){
+		super(first, second);
+	}
+	
+	public TextIntPairWritable(String first, int second){
+		this(new Text(first), new IntWritable(second));
+	}
+	
+	public TextIntPairWritable(Text first, int second){
+		this(first, new IntWritable(second));
+	}
+	
+	public TextIntPairWritable(String first, IntWritable second){
+		this(new Text(first), second);
+	}
+}
+
+class IntPairWritable extends PairWritable{
+	public IntPairWritable(){
+		super(IntWritable.class, IntWritable.class);
+	}
+	
+	public IntPairWritable(Writable first, Writable second){
+		super(first, second);
+	}
+	
+	public IntPairWritable(int first, int second){
+		this(new IntWritable(second), new IntWritable(second));
+	}
+	
+	public IntPairWritable(IntWritable first, int second){
+		this(first, new IntWritable(second));
+	}
+	
+	public IntPairWritable(int first, IntWritable second){
+		this(new IntWritable(first), second);
 	}
 }
