@@ -33,7 +33,20 @@ public class WordInNewsCount extends Configured implements Tool {
 	    	ListIterator<Term> iter = termList.listIterator();
 	    	
 	    	while(iter.hasNext()){
-	    		context.write(new TextPairWritable(iter.next().toString(), key), one);
+	    		Term term = iter.next();
+	    		if(term.getNatureStr().equals("null")) //词性为null则跳过
+	    			continue;
+	    		char nature = term.getNatureStr().charAt(0);	    		
+//	    		@SuppressWarnings("fallthrough")
+	    		switch (nature){
+	    		    case 'n': // 名词
+	    		    case 'v': //动词
+	    		    case 'a': //形容词
+	    		    case 'r': //代词
+	    		    	context.write(new TextPairWritable(term.getName(), key), one);
+	    		    	break;
+	    		}
+//	    		context.write(new TextPairWritable(term.toString(), key), one);
 	    	}
 		}
 	}
@@ -45,7 +58,7 @@ public class WordInNewsCount extends Configured implements Tool {
 				Context context) throws IOException, InterruptedException{
 			int count = 0;
 			
-			for(IntWritable value : values){
+			for(IntWritable value : values){ 
 				count += value.get();
 			}
 			context.write(key, new IntWritable(count));
