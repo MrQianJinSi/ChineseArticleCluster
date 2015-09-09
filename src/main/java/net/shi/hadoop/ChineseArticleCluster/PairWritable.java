@@ -80,7 +80,7 @@ public class PairWritable implements WritableComparable<PairWritable> {
 	
 	@Override
 	public String toString(){
-		return first.toString() + "||" + second.toString();
+		return first.toString() + ":" + second.toString();
 	}
 	
 	public Text toText(){
