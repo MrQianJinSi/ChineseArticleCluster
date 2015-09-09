@@ -14,13 +14,14 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 public class WordInNewsCount extends Configured implements Tool {
-	private static final String INPUT_PATH = "/home/galois/workspace/SougouNewsInput/C000008_bak/*.txt";
+	private static final String INPUT_PATH = "/home/galois/workspace/SougouNewsOutput/combinSequence";
 	private static final String OUTPUT_PATH = "/home/galois/workspace/SougouNewsOutput/wordCount";
 	
 	public static class WordInNewsCountMapper
@@ -35,6 +36,8 @@ public class WordInNewsCount extends Configured implements Tool {
 	    	while(iter.hasNext()){
 	    		Term term = iter.next();
 	    		if(term.getNatureStr().equals("null")) //词性为null则跳过
+	    			continue;
+	    		if(term.getName().trim().isEmpty()) //空字符串跳过
 	    			continue;
 	    		char nature = term.getNatureStr().charAt(0);	    		
 //	    		@SuppressWarnings("fallthrough")
@@ -70,8 +73,8 @@ public class WordInNewsCount extends Configured implements Tool {
 		Job job = Job.getInstance(getConf(), "Word In News Count");
 		job.setJarByClass(WordInNewsCount.class);
 		
-		job.setInputFormatClass(NewsInputFormat.class);
-//		job.setOutputFormatClass(SequenceFileOutputFormat.class);
+		job.setInputFormatClass(SequenceFileInputFormat.class);
+		job.setOutputFormatClass(SequenceFileOutputFormat.class);
 		
 		job.setMapperClass(WordInNewsCountMapper.class);
 		job.setReducerClass(WordInNewsCountReducer.class);
@@ -79,7 +82,7 @@ public class WordInNewsCount extends Configured implements Tool {
 		job.setOutputKeyClass(TextPairWritable.class);
 		job.setOutputValueClass(IntWritable.class);
 		
-//		job.setNumReduceTasks(2);
+		job.setNumReduceTasks(9);
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
