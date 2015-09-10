@@ -65,7 +65,7 @@ public class WordInNewsFrequency extends Configured implements Tool {
 		job.setJarByClass(WordInNewsFrequency.class);
 		
 		job.setInputFormatClass(SequenceFileInputFormat.class);
-//		job.setOutputFormatClass(SequenceFileOutputFormat.class);
+		job.setOutputFormatClass(SequenceFileOutputFormat.class);
 		
 		job.setMapperClass(WordInNewsFrequencyMapper.class);
 		job.setReducerClass(WordInNewsFrequencyReducer.class);
