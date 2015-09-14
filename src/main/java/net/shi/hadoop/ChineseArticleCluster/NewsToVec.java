@@ -14,7 +14,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.ArrayWritable;
+import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -33,12 +33,6 @@ public class NewsToVec extends Configured implements Tool {
 	private static final String INPUT_PATH = "/home/galois/workspace/SougouNewsOutput/wordTFIDF";
 	private static final String OUTPUT_PATH = "/home/galois/workspace/SougouNewsOutput/newsVector";
 	private static final String DICT_PATH = "/home/galois/workspace/SougouNewsOutput/dictionary/part-r-00000";
-	
-	public static class DoubleArrayWritable extends ArrayWritable{
-		public DoubleArrayWritable(){
-			super(DoubleWritable.class);
-		}
-	}
 	
 	private static class TextDoublePairWritable 
 	extends PairWritable{
@@ -62,9 +56,9 @@ public class NewsToVec extends Configured implements Tool {
 	}
 	
 	public static class NewsToVecReducer
-	extends Reducer<Text, TextDoublePairWritable, Text, DoubleArrayWritable>{
+	extends Reducer<Text, TextDoublePairWritable, Text, ArrayPrimitiveWritable>{
 		private List<Text> words = new LinkedList<>();
-		private DoubleArrayWritable doubleArray = new DoubleArrayWritable();
+		private ArrayPrimitiveWritable doubleArray = new ArrayPrimitiveWritable();
 		
 		@Override
 		public void setup(Context context) throws IOException{
@@ -96,17 +90,24 @@ public class NewsToVec extends Configured implements Tool {
 		
 		public void reduce(Text key, Iterable<TextDoublePairWritable> values,
 				Context context) throws IOException, InterruptedException{
-			Map<Text, DoubleWritable> map = new HashMap<>();
+			Map<Text, Double> map = new HashMap<>();
 			Iterator<Text> iter = words.iterator();
 			while(iter.hasNext()){
-				map.put(iter.next(), new DoubleWritable(0.0));
+				map.put(iter.next(), new Double(0.0));
 			}
 			
 			for(TextDoublePairWritable value : values){
-				map.replace((Text) value.getFirst(), (DoubleWritable) value.getSecond());
+				DoubleWritable tfidf = (DoubleWritable) value.getSecond();
+				map.replace((Text) value.getFirst(), new Double(tfidf.get()));
 			}
 			
-			doubleArray.set(map.values().toArray(new DoubleWritable[0]));
+			// 将Double[] 转换为 double[]
+			Double[] doubles = map.values().toArray(new Double[0]);
+			double[] basicDoubles = new double[doubles.length];
+			for(int i = 0; i < doubles.length; ++i)
+				basicDoubles[i] = (double) doubles[i];
+			
+			doubleArray.set(basicDoubles);
 			context.write(key, doubleArray);
 		}
 	}
@@ -131,7 +132,7 @@ public class NewsToVec extends Configured implements Tool {
 		job.setMapOutputValueClass(TextDoublePairWritable.class);
 		
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(DoubleArrayWritable.class);
+		job.setOutputValueClass(ArrayPrimitiveWritable.class);
 		
 		job.setNumReduceTasks(9);
 		
