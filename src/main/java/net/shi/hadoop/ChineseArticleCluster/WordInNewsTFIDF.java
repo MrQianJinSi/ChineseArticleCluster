@@ -30,7 +30,7 @@ import org.apache.hadoop.util.ToolRunner;
 public class WordInNewsTFIDF extends Configured implements Tool {
 	private static final String INPUT_PATH = "/home/galois/workspace/SougouNewsOutput/wordFrequency";
 	private static final String OUTPUT_PATH = "/home/galois/workspace/SougouNewsOutput/wordTFIDF";
-	private static final String NEWS_NUM_PATH = "/home/galois/workspace/SougouNewsOutput/NewsNumCount/part-r-00000";
+	private static final String NEWS_NUM_PATH = "/home/galois/workspace/SougouNewsOutput/newsNumAfterPreprocess/part-r-00000";
 	
 	private static class TextIntIntPair extends PairWritable{
 		public TextIntIntPair(){
