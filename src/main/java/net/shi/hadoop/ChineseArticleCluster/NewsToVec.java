@@ -8,14 +8,16 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
@@ -56,9 +58,8 @@ public class NewsToVec extends Configured implements Tool {
 	}
 	
 	public static class NewsToVecReducer
-	extends Reducer<Text, TextDoublePairWritable, Text, ArrayPrimitiveWritable>{
+	extends Reducer<Text, TextDoublePairWritable, Text, MapWritable>{
 		private List<Text> words = new LinkedList<>();
-		private ArrayPrimitiveWritable doubleArray = new ArrayPrimitiveWritable();
 		
 		@Override
 		public void setup(Context context) throws IOException{
@@ -90,25 +91,27 @@ public class NewsToVec extends Configured implements Tool {
 		
 		public void reduce(Text key, Iterable<TextDoublePairWritable> values,
 				Context context) throws IOException, InterruptedException{
-			Map<Text, Double> map = new HashMap<>();
+			// 存储word-tfidf对
+			Map<Text, DoubleWritable> map = new HashMap<>();
+			for(TextDoublePairWritable value : values){
+				map.put((Text) value.getFirst(), (DoubleWritable) value.getSecond());
+			}
+			Set<Text> newsWords = map.keySet();
+
+			//稀疏向量
+			int ix = 0;
+			Text word;
+			MapWritable vector = new MapWritable();
 			Iterator<Text> iter = words.iterator();
 			while(iter.hasNext()){
-				map.put(iter.next(), new Double(0.0));
+				word = iter.next();
+				if(newsWords.contains(word)){
+					vector.put(new IntWritable(ix), map.get(word));
+				}
+				ix++;
 			}
 			
-			for(TextDoublePairWritable value : values){
-				DoubleWritable tfidf = (DoubleWritable) value.getSecond();
-				map.replace((Text) value.getFirst(), new Double(tfidf.get()));
-			}
-			
-			// 将Double[] 转换为 double[]
-			Double[] doubles = map.values().toArray(new Double[0]);
-			double[] basicDoubles = new double[doubles.length];
-			for(int i = 0; i < doubles.length; ++i)
-				basicDoubles[i] = (double) doubles[i];
-			
-			doubleArray.set(basicDoubles);
-			context.write(key, doubleArray);
+			context.write(key, vector);
 		}
 	}
 
@@ -132,7 +135,7 @@ public class NewsToVec extends Configured implements Tool {
 		job.setMapOutputValueClass(TextDoublePairWritable.class);
 		
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(ArrayPrimitiveWritable.class);
+		job.setOutputValueClass(MapWritable.class);
 		
 		job.setNumReduceTasks(9);
 		
