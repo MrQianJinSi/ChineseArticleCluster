@@ -15,7 +15,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.ArrayPrimitiveWritable;
+import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -34,7 +34,7 @@ public class RandomInitCenters extends Configured implements Tool {
 	private static final String NEWS_ID_PATH = "/home/galois/workspace/SougouNewsOutput/newsIdSet/part-r-00000";
 	
 	public static class RandomInitCentersMapper
-	extends Mapper<Text, ArrayPrimitiveWritable, Text, ArrayPrimitiveWritable>{
+	extends Mapper<Text, MapWritable, Text, MapWritable>{
 		private Set<Text> centersList = new HashSet<>();
 //		private Text placeholder = new Text("PLACEHOLDER");
 		
@@ -64,7 +64,7 @@ public class RandomInitCenters extends Configured implements Tool {
 			}
 		}
 		
-		public void map(Text key, ArrayPrimitiveWritable value,
+		public void map(Text key, MapWritable value,
 				Context context) throws IOException, InterruptedException{
 
 			if(centersList.contains(key)){
@@ -73,15 +73,15 @@ public class RandomInitCenters extends Configured implements Tool {
 		}
 	}
 	
-	public static class RandomInitCentersReducer
-	extends Reducer<Text, ArrayPrimitiveWritable, Text, ArrayPrimitiveWritable>{
-		
-		public void reduce(Text key, Iterable<ArrayPrimitiveWritable> values,
-				Context context) throws IOException, InterruptedException{
-			for(ArrayPrimitiveWritable val : values)
-				context.write(key, val);
-		}
-	}
+//	public static class RandomInitCentersReducer
+//	extends Reducer<Text, MapWritable, Text, MapWritable>{
+//		
+//		public void reduce(Text key, Iterable<MapWritable> values,
+//				Context context) throws IOException, InterruptedException{
+//			for(MapWritable val : values)
+//				context.write(key, val);
+//		}
+//	}
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -105,7 +105,7 @@ public class RandomInitCenters extends Configured implements Tool {
 		job.setReducerClass(Reducer.class);
 		
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(ArrayPrimitiveWritable.class);
+		job.setOutputValueClass(MapWritable.class);
 				
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
@@ -113,12 +113,12 @@ public class RandomInitCenters extends Configured implements Tool {
 		return job.waitForCompletion(true) ? 0 : 1;
 	}
 	
-	private void getInitialCenters(String newsNum, String outPath) throws IOException{
+	private void getInitialCenters(String newsID, String outPath) throws IOException{
 		Configuration conf = this.getConf();
 		//读取新闻数量
-		Path newsNumPath = new Path(newsNum);
-		FileSystem fs = newsNumPath.getFileSystem(conf);
-		BufferedReader in = new BufferedReader(new InputStreamReader(fs.open(newsNumPath)));
+		Path newsIDPath = new Path(newsID);
+		FileSystem fs = newsIDPath.getFileSystem(conf);
+		BufferedReader in = new BufferedReader(new InputStreamReader(fs.open(newsIDPath)));
 		List<String>  newsIdSet = new ArrayList<>();
 		try{
 			String line;
@@ -144,7 +144,7 @@ public class RandomInitCenters extends Configured implements Tool {
 			ix++;
 		}	
 		out.close();
-		System.out.println(centerIxList);
+//		System.out.println(centerIxList);
 	}
 
 	public static void main(String[] args) throws Exception {
