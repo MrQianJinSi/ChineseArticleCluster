@@ -2,8 +2,10 @@ package net.shi.hadoop.ChineseArticleCluster;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,8 +13,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.ArrayPrimitiveWritable;
 import org.apache.hadoop.io.IOUtils;
+import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -30,10 +32,9 @@ public class KMeansCluster{
 	private static final String OUTPUT_PATH = "/home/galois/workspace/SougouNewsOutput/centers/";
 	
 	public static class KMeansClusterMapper
-	extends Mapper<Text, ArrayPrimitiveWritable, Text, ArrayPrimitiveWritable>{
-		double[][] centers;
-		Text[] centersTag;
-		int vetcorSize;
+	extends Mapper<Text, MapWritable, Text, MapWritable>{
+		List<MapWritable> centers = new ArrayList<>();
+		List<Text> centersTag = new ArrayList<>();
 		int centersNum;
 		
 		@Override
@@ -46,61 +47,48 @@ public class KMeansCluster{
 			SequenceFile.Reader reader = null;
 			try {
 				reader = new SequenceFile.Reader(fs, centersFile, conf);
-				long fileStart = reader.getPosition();//记录文件开始位置
 				Text key = (Text) ReflectionUtils.newInstance(reader.getKeyClass(), conf);
-				ArrayPrimitiveWritable value = (ArrayPrimitiveWritable) ReflectionUtils.newInstance(reader.getValueClass(), conf);
-				int ix = 0;
+				MapWritable value = (MapWritable) ReflectionUtils.newInstance(reader.getValueClass(), conf);
 				while(reader.next(key, value)){
-					ix++;
+					centersTag.add(new Text(key));
+					centers.add(new MapWritable(value));
 				}
 				
-				centersNum = ix;
-				vetcorSize = ((double []) value.get()).length;
-				centers = new double[centersNum][vetcorSize];
-				centersTag = new Text[centersNum];
-				
-				reader.seek(fileStart);
-				ix = 0;
-				while(reader.next(key, value)){
-					centersTag[ix] = new Text(key);
-					centers[ix] = ((double []) value.get());
-					ix++;
-				}
+				centersNum = centers.size();
 			} finally {
 				IOUtils.closeStream(reader);
 			}
 		}
 		
 		@Override
-		public void map(Text key, ArrayPrimitiveWritable value,
+		public void map(Text key, MapWritable value,
 				Context context) throws IOException, InterruptedException{
-			double[] vector = (double[]) value.get();
 			double minDist = Double.MAX_VALUE;
 			int closestIx  = -1;
 			for(int i = 0; i < centersNum; ++i){
-				double dist = MathVector.getEuclideanDistance(vector, centers[i]);
+				double dist = MathVector.getEuclideanDistance(value, centers.get(i));
 				if(dist < minDist){
 					closestIx = i;
 					minDist = dist;
 				}
 			}
-			context.write(centersTag[closestIx], value);
+			context.write(centersTag.get(closestIx), value);
 		}
 	}
 	
 	public static class KMeansClusterReducer
-	extends Reducer<Text, ArrayPrimitiveWritable, Text, ArrayPrimitiveWritable>{
-		public void reduce(Text key, Iterable<ArrayPrimitiveWritable> values,
+	extends Reducer<Text, MapWritable, Text, MapWritable>{
+		public void reduce(Text key, Iterable<MapWritable> values,
 				Context context) throws IOException, InterruptedException{
-			double[] sumCenter = null;
+			MapWritable sumCenter = new MapWritable();
 			int vecNum = 0;
-			for(ArrayPrimitiveWritable val : values){
-				sumCenter = MathVector.addVector(sumCenter, (double[]) val.get());
+			for(MapWritable val : values){
+				sumCenter = MathVector.addVector(sumCenter, val);
 				vecNum += 1;
 			}
-			double[] avgCenter = MathVector.dividedByScala(sumCenter, (double) vecNum);
+			MapWritable avgCenter = MathVector.dividedByScala(sumCenter, (double) vecNum);
 			
-			context.write(key, new ArrayPrimitiveWritable(avgCenter));
+			context.write(key, avgCenter);
 		}
 	}
 	
@@ -116,7 +104,7 @@ public class KMeansCluster{
 		job.setReducerClass(KMeansClusterReducer.class);
 		
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(ArrayPrimitiveWritable.class);
+		job.setOutputValueClass(MapWritable.class);
 		
 		FileInputFormat.addInputPath(job, new Path(paths[0]));
 		FileOutputFormat.setOutputPath(job, new Path(paths[1]));
@@ -130,26 +118,26 @@ public class KMeansCluster{
 		
 		//读取旧的中心文件
 		SequenceFile.Reader oldFileReader = null;
-		Map<Text, ArrayPrimitiveWritable> oldData = new HashMap<>();
+		Map<Text, MapWritable> oldData = new HashMap<>();
 		try {
 			oldFileReader = new SequenceFile.Reader(fs, oldPath, conf);
 			Text key = (Text) ReflectionUtils.newInstance(oldFileReader.getKeyClass(), conf);
-			ArrayPrimitiveWritable value = (ArrayPrimitiveWritable) ReflectionUtils.newInstance(oldFileReader.getValueClass(), conf);
+			MapWritable value = (MapWritable) ReflectionUtils.newInstance(oldFileReader.getValueClass(), conf);
 			while(oldFileReader.next(key, value)){
-				oldData.put(new Text(key), new ArrayPrimitiveWritable(value.get()));
+				oldData.put(new Text(key), new MapWritable(value));
 			}
 		} finally {
 			IOUtils.closeStream(oldFileReader);
 		}
 		//读取新的中心文件
 		SequenceFile.Reader newFileReader = null;
-		Map<Text, ArrayPrimitiveWritable> newData = new HashMap<>();
+		Map<Text, MapWritable> newData = new HashMap<>();
 		try {
 			newFileReader = new SequenceFile.Reader(fs, newPath, conf);
 			Text key = (Text) ReflectionUtils.newInstance(newFileReader.getKeyClass(), conf);
-			ArrayPrimitiveWritable value = (ArrayPrimitiveWritable) ReflectionUtils.newInstance(newFileReader.getValueClass(), conf);
+			MapWritable value = (MapWritable) ReflectionUtils.newInstance(newFileReader.getValueClass(), conf);
 			while(newFileReader.next(key, value)){
-				newData.put(new Text(key), new ArrayPrimitiveWritable(value.get()));
+				newData.put(new Text(key), new MapWritable(value));
 			}
 		} finally {
 			IOUtils.closeStream(newFileReader);
@@ -160,9 +148,7 @@ public class KMeansCluster{
 		Iterator<Text> iter = centerTags.iterator();
 		while(iter.hasNext()){
 			Text key = iter.next();
-			double[] oldCenter = (double[]) oldData.get(key).get();
-			double[] newCenter = (double[]) newData.get(key).get();
-			double dist = MathVector.getEuclideanDistance(oldCenter, newCenter);
+			double dist = MathVector.getEuclideanDistance(oldData.get(key), newData.get(key));
 			if(dist > maxDiff)
 				maxDiff = dist;
 		}
