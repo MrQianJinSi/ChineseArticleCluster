@@ -16,7 +16,6 @@ import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.ArrayPrimitiveWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -37,6 +36,7 @@ public class RandomInitCenters extends Configured implements Tool {
 	public static class RandomInitCentersMapper
 	extends Mapper<Text, ArrayPrimitiveWritable, Text, ArrayPrimitiveWritable>{
 		private Set<Text> centersList = new HashSet<>();
+//		private Text placeholder = new Text("PLACEHOLDER");
 		
 		public void setup(Context context) throws IOException{
 			//读取存储的centers
@@ -74,10 +74,11 @@ public class RandomInitCenters extends Configured implements Tool {
 	}
 	
 	public static class RandomInitCentersReducer
-	extends Reducer<LongWritable, Text, LongWritable, Text>{
-		public void reduce(LongWritable key, Iterable<Text> values,
+	extends Reducer<Text, ArrayPrimitiveWritable, Text, ArrayPrimitiveWritable>{
+		
+		public void reduce(Text key, Iterable<ArrayPrimitiveWritable> values,
 				Context context) throws IOException, InterruptedException{
-			for(Text val : values)
+			for(ArrayPrimitiveWritable val : values)
 				context.write(key, val);
 		}
 	}
