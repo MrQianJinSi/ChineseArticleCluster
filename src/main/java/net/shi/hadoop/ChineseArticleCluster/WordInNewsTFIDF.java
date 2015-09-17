@@ -3,9 +3,11 @@ package net.shi.hadoop.ChineseArticleCluster;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -91,12 +93,13 @@ public class WordInNewsTFIDF extends Configured implements Tool {
 		
 		public void reduce(Text key, Iterable<TextIntIntPair> values,
 				Context context) throws IOException, InterruptedException{
-			int newsNumIncludeWord = 0;
 			List<TextIntIntPair> pairList = new LinkedList<>();
+			Set<Text> newsIdSet = new HashSet<>();
 			for(TextIntIntPair value : values){
-				newsNumIncludeWord++;
+				newsIdSet.add((Text) value.getFirst());
 				pairList.add(new TextIntIntPair(value.getFirst(), value.getSecond()));
 			}
+			int newsNumIncludeWord = newsIdSet.size();
 			
 			double idf = (double) newsNumCount / newsNumIncludeWord;
 			idf = Math.log10(idf);
