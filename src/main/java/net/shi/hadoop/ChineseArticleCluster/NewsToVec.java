@@ -111,6 +111,17 @@ public class NewsToVec extends Configured implements Tool {
 				ix++;
 			}
 			
+//			Set<Entry<Writable, Writable>> entries = vector.entrySet();
+//			String text = "";
+//			Iterator<Entry<Writable, Writable>> iter1 = entries.iterator();
+//			while(iter1.hasNext()){
+//				Entry<Writable, Writable> entry = iter1.next();
+//				String entryString = "[";
+//				entryString = entryString + entry.getKey().toString() + ",";
+//				entryString = entryString + entry.getValue().toString() + "]";
+//				text  = text + entryString + " ";
+//			}
+			
 			context.write(key, vector);
 		}
 	}
@@ -137,7 +148,7 @@ public class NewsToVec extends Configured implements Tool {
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(MapWritable.class);
 		
-		job.setNumReduceTasks(9);
+		job.setNumReduceTasks(1);
 		
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
