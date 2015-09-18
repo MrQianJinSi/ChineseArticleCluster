@@ -27,8 +27,8 @@ import org.apache.hadoop.util.ToolRunner;
 @SuppressWarnings("deprecation")
 public class GetNewsCluster extends Configured implements Tool {
 	private static final String INPUT_PATH = "/home/galois/workspace/SougouNewsOutput/newsVector";
-	private static final String OUTPUT_PATH = "/home/galois/workspace/SougouNewsOutput/cluster";
-	private static final String CENTERS_PATH = "/home/galois/workspace/SougouNewsOutput/centers/iter24/part-r-00000";
+	private static final String OUTPUT_PATH = "/home/galois/workspace/SougouNewsOutput/cluster_bak";
+	private static final String CENTERS_PATH = "/home/galois/workspace/SougouNewsOutput/centers_bak/iter24/part-r-00000";
 	
 	public static class GetNewsClusterMapper
 	extends Mapper<Text, MapWritable, Text, Text>{

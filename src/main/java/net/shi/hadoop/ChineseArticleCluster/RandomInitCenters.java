@@ -144,7 +144,7 @@ public class RandomInitCenters extends Configured implements Tool {
 			ix++;
 		}	
 		out.close();
-//		System.out.println(centerIxList);
+		System.out.println(centerIxList);
 	}
 
 	public static void main(String[] args) throws Exception {

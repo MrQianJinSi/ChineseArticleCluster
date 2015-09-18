@@ -161,7 +161,7 @@ public class KMeansCluster{
 		String[] paths = new String[2];
 		paths[0] = INPUT_PATH;
 		
-		int iterNum = 20;
+		int iterNum = 0;
 		double threshold = 0.000001;
 		
 		PrintWriter log = new PrintWriter(OUTPUT_PATH+"log");
@@ -189,7 +189,7 @@ public class KMeansCluster{
 				break;
 			
 			iterNum++;
-		}while(iterNum < 25);
+		}while(iterNum < 20);
 		
 		log.close();
 		
