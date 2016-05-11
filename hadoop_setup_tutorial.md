@@ -21,6 +21,7 @@ hadoop是用java编写的framework，要求会java语言就不必说了。市场
 ## 如何部署hadoop
 hadoop是一个分布式处理框架，自然是要部署在多台电脑上的。按照hadoop的架构，至少要有两台电脑，一台是master，一台是slave。如果有N台电脑，那么其中1台是master，剩下的N-1台都是slaves。master电脑上运行着namenode和resource manager, slaves电脑则运行datanode和node manager。大部分情况下，我们都是通过在master上来访问并控制slaves的。
 由于master和slaves分工不同，在参数配置上也会有所区别。首先讲master和slaves的共同配置，最后再分别讲master和slaves参数不同的地方。
+
 ### master和slaves的共同配置
 - 安装linux
 所有电脑都要安装linux，推荐使用linux的Ubuntu发行版，使用的人多，遇到问题了网上也容易搜到。
