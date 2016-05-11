@@ -22,17 +22,17 @@ hadoop是用java编写的framework，要求会java语言就不必说了。市场
 hadoop是一个分布式处理框架，自然是要部署在多台电脑上的。按照hadoop的架构，至少要有两台电脑，一台是master，一台是slave。如果有N台电脑，那么其中1台是master，剩下的N-1台都是slaves。master电脑上运行着namenode和resource manager, slaves电脑则运行datanode和node manager。大部分情况下，我们都是通过在master上来访问并控制slaves的。
 由于master和slaves分工不同，在参数配置上也会有所区别。首先讲master和slaves的共同配置，最后再分别讲master和slaves参数不同的地方。
 ### master和slaves的共同配置
-- **1.安装linux**
+- 安装linux
 所有电脑都要安装linux，推荐使用linux的Ubuntu发行版，使用的人多，遇到问题了网上也容易搜到。
-- **2. 安装jvm(java virtual marchine)**
+- 安装jvm(java virtual marchine)
 jvm是java的运行环境。所有java程序都必须运行于jvm之上，hadoop自然也不例外。jvm有很多不同的实现，可以通过[hadoop wiki](https://wiki.apache.org/hadoop/HadoopJavaVersions)来查看jvm的兼容性。
 Ubuntu发行版应该自带了openjdk，我们用它就够了。通过在bash(linux的命令行工具)中键入：`java --version`，如果能返回版本号，说明电脑就已经安装好了jvm。如果没有返回，那么输入下面的命令来安装。
 `sudo apt-get install openjdk-8-jdk`
 jvm的安装路径一般为/usr/lib/jvm/jvm_name
-- **3. 安装hadoop**
+- 安装hadoop
 去[hadoop发布页面](http://hadoop.apache.org/releases.html)下载最新的hadoop程序包，注意下载binary版本。假设下载文件名字位：hadoop-X.Y.Z.tar.gz  在bash中键入
 `tar -zxvf hadoop.tar.gz -C /usr/local/`
-- **4. 建立hadoop用户群**
+- 建立hadoop用户群
 为了方面后边配置和管理，建议建立单独的hadoop用户账号。在bash中依次输入
 ``` bash
 sudo addgroup hadoop   
@@ -40,7 +40,7 @@ sudo adduser --ingroup hadoop hduser
 sudo chown -R hduser:hadoop /usr/local/hadoop-X.Y.Z
 ``` 
 记住这一步设置的用户密码,后面用得到
-- **5. 设置环境变量**
+- 设置环境变量
 hadoop的运行依赖于一些系统参数，因此我们要事先设置一些环境变量。
 首先切换到hadoop账户下,
 `su - hadoop`
@@ -53,7 +53,7 @@ export JAVA_HOME=/usr/lib/jvm/java-6-sun
 # Add Hadoop bin/ directory to PATH
 export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
 ```
-- **6.修改hosts文件**
+- 修改hosts文件
 按如下格式修改/etc/hosts文件
 格式: ip  hostname
 ```
@@ -63,12 +63,12 @@ export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
 ```
 注意:这里的hostname一定是在bash中运行`hostname`返回的字符串
 此外如果有hosts文件中有`127.0.1.1 hostname`或者 `127.0.0.1 hostname`这样的行，则一定要删掉，不然会影响hadoop网络之间的通信。
-- **7. 安装ssh-server**
+- 安装ssh-server
 hadoop通过ssh来管理各个节点，ubuntu默认已经安装了ssh访问程序，但是还要对每台电脑还要安装服务器端程序。
 `sudo apt-get install openssh-server`
 
 ###只需要对master进行的设置
-- **1. 设置ssh免密码访问**
+- 设置ssh免密码访问
 生成本地sshkey
 `ssh-keygen -t rsa -P  ''`
 密码一定要是空的，这样才能实现无密码登录。
@@ -77,7 +77,7 @@ hadoop通过ssh来管理各个节点，ubuntu默认已经安装了ssh访问程�
 此外还要将master的public key添加到master的authorized_keys，因为namenode在本机上，也要ssh登录的。
 `cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys`
 当访问某个host时，会有是否将该host加入known host的提问，答应就好了
-- **2.设置hadoop系统参数**
+- 设置hadoop系统参数
 以下的参数设置默认目录是/usr/local/hadoop
 将etc/hadoop/hadoop-env.sh文件中的$JAVA_HOME改为/usr/lib/jvm/java-8-oracle
 
